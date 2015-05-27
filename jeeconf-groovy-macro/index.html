@@ -1,0 +1,290 @@
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <title>reveal.js</title>
+    <meta name='description' content='An easy to use CSS 3D slideshow tool for quickly creating good looking HTML presentations.' />
+    <meta name='author' content='Hakim El Hattab' />
+    <meta name='apple-mobile-web-app-capable' content='yes' />
+    <meta name='apple-mobile-web-app-status-bar-style' content='black-translucent' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui' />
+    <link rel='stylesheet' href='webjars/reveal.js/3.0.0/css/reveal.css' />
+    <link rel='stylesheet' href='webjars/reveal.js/3.0.0/css/theme/white.css' id='theme' />
+    <link rel='stylesheet' href='webjars/reveal.js/3.0.0/lib/css/zenburn.css' />
+    <link rel='stylesheet' href='webjars/highlight.js/8.6.0/styles/androidstudio.css' /><!--[if lt IE 9]>
+    <script src='webjars/reveal.js/3.0.0/lib/js/html5shiv.js'></script><![endif]-->
+    <style>
+h1, h2, h3, h4, h5, h6 {
+    text-transform: none !important;
+}
+
+.slides {
+    width: 1024px !important;
+    height: 768px !important;
+}
+
+.highlight pre {
+    margin: 0 0 !important;
+    width: 100% !important;
+}
+
+code {
+    counter-reset: listing;
+}
+
+code .line {
+    display: block;
+    
+    word-wrap: break-word;
+    margin-left: 40px;
+    text-indent: -40px;
+    
+    counter-increment: listing;
+}
+
+code .line:before {
+    content: counter(listing);
+    color: gray;
+    
+    text-align: right;
+    
+    width: 1.3em;
+    display: inline-block;
+    border-right: 1px solid gray;
+    
+    padding-right: 5px;
+    margin-right: 8px;
+}
+
+code .line.defocus {
+    opacity: 0.1;
+}
+
+.slides img{
+border:0;
+}
+
+</style>
+  </head>
+  <body>
+    <div class='reveal'>
+      <div class='slides'>
+        <section>
+          <h1>Groovy under macroscope</h1>
+          <p>
+            <small>Sergei Egorov /
+              <a href='https://twitter.com/bsideup'>@bsideup</a>
+            </small>
+          </p>
+          <p>
+            <small>Baruch Sadogursky /
+              <a href='https://twitter.com/bsideup'>@jbaruch</a>
+            </small>
+          </p>
+        </section>
+        <section data-background='images/hardcore.jpg'></section>
+        <section>
+          <h3>GORM</h3>
+          <pre><code class="groovy" data-trim>/* Before */
+def persons = Person.findAll {
+    name =~ /Serg/
+}
+
+/* After */
+def persons = Person.executeQuery '''
+    FROM Person WHERE name LIKE '%Serg%'
+'''</code></pre>
+        </section>
+        <section>
+          <h3>Poor man's GORM</h3>
+          <pre><code class="groovy" data-trim>@Macro
+def findAll(def context, Expression exp, ClosureExpression cl) {
+  return callX(
+    exp,
+    "executeQuery",
+    constX("FROM ${exp.name} " +
+      cl.code.statements.collect {
+        if(it instanceof BinaryExpression
+          &amp;&amp; it.operation.type == REGEX_COMPARISON_OPERATOR)
+            "$it.leftExpression LIKE '%$it.rightExpression.text%'"
+      }.filter{ it != null }.join(" AND ")
+    )
+  )
+}</code></pre>
+          <span class='fragment' data-code-focus='1-1'></span>
+          <span class='fragment' data-code-focus='2-2'></span>
+          <span class='fragment' data-code-focus='7-7,8-8,9-9,10-10,11-11'></span>
+          <span class='fragment' data-code-focus=''></span>
+        </section>
+        <section>
+          <img src='images/confused.gif' width='200%' />
+        </section>
+        <section>
+          <h3>Starting simple</h3>
+          <pre><code class="groovy" data-trim>def hello = assertNulls foo.bar.messages.hello.toUpperCase()
+
+println hello</code></pre>
+          <p>Will print</p>
+          <pre><code class="python" data-trim>Assertion failed:
+
+assert foo?.bar?.messages?.hello?.toUpperCase() != null
+        |    |    |         |      |             |
+        |    |    null      null   null          false
+        |    [hello:World!]
+        [bar:[hello:World!]]</code></pre>
+        </section>
+        <section>
+          <h3>Look Ma so easy</h3>
+          <pre><code class="groovy" data-trim>@Macro def assertNulls(def context, Expression self, Expression exp){
+    makeNullSafe(exp)
+    def cl = closureX(params(), block(
+            new AssertStatement(notNullX(exp)),
+            returnS(exp)
+    ))
+    return callX(cl, "call", args())
+}
+
+def makeNullSafe(Expression exp) {
+    if (exp instanceof PropertyExpression
+            || exp instanceof MethodCallExpression) {
+        exp.safe = true
+        makeNullSafe(exp.objectExpression)
+    }
+}</code></pre>
+          <span class='fragment' data-code-focus='1-1'></span>
+          <span class='fragment' data-code-focus='2-2'></span>
+          <span class='fragment' data-code-focus='10-16'></span>
+          <span class='fragment' data-code-focus='3-6'></span>
+          <span class='fragment' data-code-focus='7-7'></span>
+          <span class='fragment' data-code-focus=''></span>
+        </section>
+        <section>
+          <h3>Result</h3>
+          <pre><code class="groovy" data-trim>def hello = {
+    assert foo?.bar?.messages?.hello?.toUpperCase() != null
+
+    return foo.bar.messages.hello.toUpperCase()
+}()
+
+println hello</code></pre>
+        </section>
+        <section>
+          <h3>Classic AST nodes creation</h3>
+          <pre><code class="groovy" data-trim>def returnStatement = new ReturnStatement(
+        new ConstructorCallExpression(
+                ClassHelper.make(SomeCoolClass),
+                new ArgumentListExpression(
+                        new ConstantExpression("someValue")
+                )
+        )
+)</code></pre>
+          <span class='fragment' data-code-focus='1-1'></span>
+          <span class='fragment' data-code-focus='3-3'></span>
+          <span class='fragment' data-code-focus='4-6'></span>
+          <span class='fragment' data-code-focus=''></span>
+        </section>
+        <section>
+          <h3>MacroGroovy</h3>
+          <pre><code class="groovy" data-trim>def returnStatement = macro {
+    return new SomeCoolClass("someValue")
+}</code></pre>
+          <span class='fragment' data-code-focus='2-2'></span>
+        </section>
+        <section>
+          <h3>Compare</h3>
+          <pre><code class="groovy" data-trim>def returnStatement = new ReturnStatement(
+        new ConstructorCallExpression(
+                ClassHelper.make(SomeCoolClass),
+                new ArgumentListExpression(
+                        new ConstantExpression("someValue")
+                )
+        )
+)</code></pre>
+          <pre><code class="groovy" data-trim>def returnStatement = macro {
+    return new SomeCoolClass("someValue")
+}</code></pre>
+        </section>
+        <section>
+          <h2>How it's possible?</h2>
+        </section>
+        <section>
+          <h2>Macro methods!</h2>
+        </section>
+        <section>
+          <h3>Example</h3>
+          <pre><code class="groovy" data-trim>def returnStatement = macro {
+    return new SomeCoolClass("someValue")
+}</code></pre>
+        </section>
+        <section>
+          <h3>After Macro transformation</h3>
+          <pre><code class="groovy" data-trim>def returnStatement = MacroBuilder.INSTANCE.macro(
+        '''return new SomeCoolClass("someValue")''',
+        [:],
+        ReturnStatement
+)</code></pre>
+          <p>Where:</p>
+          <pre><code class="groovy" data-trim>public enum MacroBuilder {
+    public &lt;T&gt; T macro(
+            String source,
+            Map&lt;MacroSubstitutionKey, Closure&lt;Expression&gt;&gt; context,
+            Class&lt;T&gt; resultClass
+    )
+}</code></pre>
+          <span class='fragment' data-code-focus='1-1,7-7'></span>
+          <span class='fragment' data-code-focus='2-2,8-8'></span>
+          <span class='fragment' data-code-focus='3-3,9-9'></span>
+          <span class='fragment' data-code-focus='4-4,10-10'></span>
+          <span class='fragment' data-code-focus=''></span>
+        </section>
+        <section>
+          <img src='images/questions.jpg' />
+        </section>
+      </div>
+    </div>
+    <script src='webjars/reveal.js/3.0.0/lib/js/head.min.js'></script>
+    <script src='webjars/reveal.js/3.0.0/js/reveal.js'></script>
+    <script>
+			Reveal.initialize({
+				controls: false,
+				progress: false,
+				history: true,
+				center: true,
+
+				transition: 'none', // none/fade/slide/convex/concave/zoom
+				
+				// transitionSpeed: 'fast',
+				
+				viewDistance: 2,
+				
+				backgroundTransition: 'none',
+
+				// Optional reveal.js plugins
+				dependencies: [
+					{ src: 'webjars/reveal.js/3.0.0/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'webjars/reveal.js/3.0.0/plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'webjars/reveal.js/3.0.0/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'webjars/reveal.js/3.0.0/plugin/highlight/highlight.js', async: true, condition: function() { return !!document.querySelector( 'pre code' ); }, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'webjars/reveal.js/3.0.0/plugin/zoom-js/zoom.js', async: true },
+					{ src: 'webjars/reveal.js/3.0.0/plugin/notes/notes.js', async: true },
+					{ src: 'plugins/reveal-code-focus/reveal-code-focus.js', async: true }
+				]
+			});
+</script>
+    <script>
+if(!remot){
+    var remot = {io : {uid : 'testqw' } };
+    
+    (
+        function() {
+            var sc = document.createElement('SCRIPT');
+            sc.type = 'text/javascript';
+            sc.src = 'remote.io/bookmarklet.js';
+            document.getElementsByTagName('head')[0].appendChild(sc);
+        }
+    )();
+}
+</script>
+    <script>
+document.write('<script src="http://' + (location.host || 'localhost').split(':')[0] + ':35729/livereload.js?snipver=1"></' + 'script>')</script>
+  </body>
+</html>
