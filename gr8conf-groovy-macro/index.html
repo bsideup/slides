@@ -1,0 +1,449 @@
+<html lang='en'>
+  <head>
+    <meta charset='UTF-8' />
+    <title>reveal.js</title>
+    <meta name='description' content='An easy to use CSS 3D slideshow tool for quickly creating good looking HTML presentations.' />
+    <meta name='author' content='Hakim El Hattab' />
+    <meta name='apple-mobile-web-app-capable' content='yes' />
+    <meta name='apple-mobile-web-app-status-bar-style' content='black-translucent' />
+    <meta name='viewport' content='width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, minimal-ui' />
+    <link rel='stylesheet' href='webjars/reveal.js/3.0.0/css/reveal.css' />
+    <link rel='stylesheet' href='webjars/reveal.js/3.0.0/css/theme/night.css' id='theme' />
+    <link rel='stylesheet' href='webjars/reveal.js/3.0.0/lib/css/zenburn.css' />
+    <link rel='stylesheet' href='webjars/highlight.js/8.6.0/styles/androidstudio.css' /><!--[if lt IE 9]>
+    <script src='webjars/reveal.js/3.0.0/lib/js/html5shiv.js'></script><![endif]-->
+    <style>
+
+body {
+    background: url(images/bg.png) no-repeat bottom left fixed;
+    background-size: cover;
+}
+
+h1, h2, h3, h4, h5, h6 {
+    text-transform: none !important;
+}
+
+.slides {
+    width: 1024px !important;
+    height: 768px !important;
+}
+
+
+.slides .raw-image {
+    border: 0 !important;
+    background: none !important;
+}
+
+.highlight pre {
+    margin: 0 0 !important;
+    width: 100% !important;
+}
+
+code {
+    counter-reset: listing;
+    font-size: 130% !important;
+}
+
+code .line {
+    display: block;
+    
+    word-wrap: break-word;
+    margin-left: 40px;
+    text-indent: -40px;
+    
+    counter-increment: listing;
+}
+
+code .line:before {
+    content: counter(listing);
+    color: gray;
+    
+    text-align: right;
+    
+    width: 1.3em;
+    display: inline-block;
+    border-right: 1px solid gray;
+    
+    padding-right: 5px;
+    margin-right: 8px;
+}
+
+code .line.defocus {
+    opacity: 0.1;
+}
+
+.reveal .footer {
+    position: absolute;
+    bottom: 1em;
+    right: 1em;
+}
+
+</style>
+  </head>
+  <body>
+    <div class='reveal'>
+      <div class='slides'>
+        <section data-background='images/lead.png' style='margin-top: 300px'>
+          <h2>Groovy under macroscope</h2>
+          <p>
+            <small>Sergei Egorov /
+              <a href='https://twitter.com/bsideup'>@bsideup</a>
+            </small>
+          </p>
+        </section>
+        <section>
+          <h2>About me</h2>
+          <ul>
+            <li>Software developer at TransferWise</li>
+            <li>Compiler maniac</li>
+            <li>Creator of MacroGroovy</li>
+          </ul>
+          <br />
+          <img src='images/transferwise.png' class='raw-image' width='25%'></img>
+        </section>
+        <section>
+          <img src='images/macrowat.jpg' width='120%'></img>
+        </section>
+        <section>
+          <blockquote>
+If, <strong>during compilation</strong>, the compiler encounters an application of the macro method m(args),
+it will expand that application by <i>invoking</i> the corresponding macro implementation method,
+with the abstract-syntax trees of the argument expressions as arguments. <br /> <br />
+The result is <strong>another abstract syntax tree</strong>, which will be inlined at the call site.
+</blockquote>
+        </section>
+        <section>
+          <h1>Macros</h1>
+          <h2>In other languages</h2>
+        </section>
+        <section>
+          <h2>Haxe</h2>
+          <pre><code class="haxe" data-trim>import haxe.macro.Context;
+class Test {
+    static function main() {
+        trace(getBuildDate());
+    }
+    
+    @:macro public static function getBuildDate() {
+        var date = Date.now().toString();
+        return Context.makeExpr(date, Context.currentPos());
+    }
+}</code></pre>
+          <span class='fragment' data-code-focus='7-10'></span>
+          <span class='fragment' data-code-focus='4-4'></span>
+          <span class='fragment' data-code-focus=''></span>
+        </section>
+        <section>
+          <h2>Lisp-like</h2>
+          <pre><code class="closure" data-trim>(defmacro unless [pred a b]
+  `(if (not ~pred) ~a ~b))
+
+(unless false (println "Will print") (println "Will not print"))</code></pre>
+        </section>
+        <section>
+          <h2>Scala</h2>
+          <pre><code class="scala" data-trim>.                                                                 
+                         ,-------.                 /             
+                       ,'         `.           ,--'              
+                     ,'             `.      ,-;--        _.-     
+               pow! /                 \ ---;-'  _.=.---''        
+  +-------------+  ;    X        X     ---=-----'' _.-------     
+  |    -----    |--|                   \-----=---:i-             
+  +XX|'i:''''''''  :                   ;`--._ ''---':----        
+  /X+-)             \   \         /   /      ''--._  `-          
+ .XXX|)              `.  `.     ,'  ,'             ''---.        
+   X\/)                `.  '---'  ,'                     `-      
+     \                   `---+---'                               
+      \                      |                                   
+       \.                    |                                   
+         `-------------------+</code></pre>
+        </section>
+        <section>
+          <img src='images/yuno.jpg' width='50%'></img>
+        </section>
+        <section>
+          <h3>They are already living among us</h3>
+          <img src='images/around_us.jpg' width='65%'></img>
+        </section>
+        <section>
+          <h3>GORM</h3>
+          <p>Before:</p>
+          <pre><code class="groovy" data-trim>def persons = Person.findAll {
+    name =~ /Serg/
+}</code></pre>
+          <p>After:</p>
+          <pre><code class="groovy" data-trim>def persons = Person.executeQuery '''
+    FROM Person WHERE name LIKE '%Serg%'
+'''</code></pre>
+          <span class='fragment' data-code-focus='1-1'></span>
+        </section>
+        <section>
+          <h3>AstBuilder</h3>
+          <pre><code class="groovy" data-trim>import org.codehaus.groovy.ast.builder.AstBuilder
+
+AstBuilder.buildFromCode {
+    println "hello"
+}</code></pre>
+          <span class='fragment' data-code-focus='3-3'></span>
+        </section>
+        <section data-background='images/hardcore.jpg'></section>
+        <section>
+          <h3>Poor man's GORM</h3>
+          <pre><code class="groovy" data-trim>def persons = Person.findAll {
+    name =~ /Serg/
+}</code></pre>
+          <pre><code class="groovy" data-trim>@Macro
+def findAll(def context, Expression exp, ClosureExpression cl) {
+  return callX(
+    exp,
+    "executeQuery",
+    constX("FROM ${exp.name} " +
+      cl.code.statements.collect {
+        assert it instanceof BinaryExpression
+        if(it.operation.type == REGEX_COMPARISON_OPERATOR) {
+          "$it.leftExpression LIKE '%$it.rightExpression.text%'"
+        }
+      }.filter{ it != null }.join(" AND ")
+    )
+  )
+}</code></pre>
+          <span class='fragment' data-code-focus='4-4'></span>
+          <span class='fragment' data-code-focus='1-1,5-5'></span>
+          <span class='fragment' data-code-focus='2-2,10-15'></span>
+          <span class='fragment' data-code-focus=''></span>
+        </section>
+        <section>
+          <h3>Starting simple</h3>
+          <pre><code class="groovy" data-trim>def hello = assertNulls foo.bar.messages.hello.toUpperCase()
+
+println hello</code></pre>
+          <p>Will print</p>
+          <pre><code class="python" data-trim>Assertion failed:
+
+assert foo?.bar?.messages?.hello?.toUpperCase() != null
+        |    |    |         |      |             |
+        |    |    null      null   null          false
+        |    [hello:World!]
+        [bar:[hello:World!]]</code></pre>
+        </section>
+        <section>
+          <h3>Look Ma so easy</h3>
+          <pre><code class="groovy" data-trim>def hello = assertNulls foo.bar.messages.hello.toUpperCase()
+
+println hello</code></pre>
+          <pre><code class="groovy" data-trim>@Macro
+def assertNulls(def context, Expression self, Expression exp){
+    makeNullSafe(exp)
+    def cl = closureX(params(), block(
+            new AssertStatement(notNullX(exp)),
+            returnS(exp)
+    ))
+    return callX(cl, "call", args())
+}
+
+def makeNullSafe(Expression exp) {
+    if (exp instanceof PropertyExpression
+            || exp instanceof MethodCallExpression) {
+        exp.safe = true
+        makeNullSafe(exp.objectExpression)
+    }
+}</code></pre>
+          <span class='fragment' data-code-focus='4-4'></span>
+          <span class='fragment' data-code-focus='1-1,5-5'></span>
+          <span class='fragment' data-code-focus='13-19'></span>
+          <span class='fragment' data-code-focus='6-9'></span>
+          <span class='fragment' data-code-focus='11-11'></span>
+          <span class='fragment' data-code-focus=''></span>
+        </section>
+        <section>
+          <h3>Result</h3>
+          <pre><code class="groovy" data-trim>def hello = {
+    assert foo?.bar?.messages?.hello?.toUpperCase() != null
+
+    return foo.bar.messages.hello.toUpperCase()
+}()
+
+println hello</code></pre>
+        </section>
+        <section>
+          <h3>Classic AST nodes creation</h3>
+          <pre><code class="groovy" data-trim>def returnStatement = new ReturnStatement(
+        new ConstructorCallExpression(
+                ClassHelper.make(SomeCoolClass),
+                new ArgumentListExpression(
+                        new ConstantExpression("someValue")
+                )
+        )
+)</code></pre>
+          <span class='fragment' data-code-focus='1-1'></span>
+          <span class='fragment' data-code-focus='3-3'></span>
+          <span class='fragment' data-code-focus='4-6'></span>
+          <span class='fragment' data-code-focus=''></span>
+        </section>
+        <section>
+          <h3>MacroGroovy</h3>
+          <pre><code class="groovy" data-trim>def returnStatement = macro {
+    return new SomeCoolClass("someValue")
+}</code></pre>
+          <span class='fragment' data-code-focus='2-2'></span>
+        </section>
+        <section>
+          <h3>Compare</h3>
+          <pre><code class="groovy" data-trim>def returnStatement = new ReturnStatement(
+        new ConstructorCallExpression(
+                ClassHelper.make(SomeCoolClass),
+                new ArgumentListExpression(
+                        new ConstantExpression("someValue")
+                )
+        )
+)</code></pre>
+          <pre><code class="groovy" data-trim>def returnStatement = macro {
+    return new SomeCoolClass("someValue")
+}</code></pre>
+        </section>
+        <section>
+          <h2>How it's possible?</h2>
+        </section>
+        <section>
+          <h2>Macro methods!</h2>
+        </section>
+        <section>
+          <h3>Example</h3>
+          <pre><code class="groovy" data-trim>def arg = constX("someValue")
+
+def returnStatement = macro {
+    return new SomeCoolClass($v{arg})
+}</code></pre>
+        </section>
+        <section>
+          <h3>After Macro transformation</h3>
+          <pre><code class="groovy" data-trim>def returnStatement = MacroBuilder.INSTANCE.macro(
+        '''return new SomeCoolClass($v{arg})''',
+        [(new SubstitutionKey(0, 12, 0, 19)) : { -&gt; arg}],
+        ReturnStatement
+)</code></pre>
+          <p>Where:</p>
+          <pre><code class="groovy" data-trim>public enum MacroBuilder {
+    public &lt;T&gt; T macro(
+            String source,
+            Map&lt;MacroSubstitutionKey, Closure&lt;Expression&gt;&gt; context,
+            Class&lt;T&gt; resultClass
+    )
+}</code></pre>
+          <span class='fragment' data-code-focus='1-1,7-7'></span>
+          <span class='fragment' data-code-focus='2-2,8-8'></span>
+          <span class='fragment' data-code-focus='3-3,9-9'></span>
+          <span class='fragment' data-code-focus='4-4,10-10'></span>
+          <span class='fragment' data-code-focus=''></span>
+        </section>
+        <section>
+          <h3>MacroGroovy vs AstBuilder.buildFromCode</h3>
+          <table class='reveal'>
+            <tr>
+              <td></td>
+              <td>MacroGroovy</td>
+              <td>buildFromCode</td>
+            </tr>
+            <tr>
+              <td>Refactorings</td>
+              <td>
+                <strong style='font-size: 30; color: green'>✔︎</strong>
+              </td>
+              <td>
+                <strong style='font-size: 30; color: green'>✔︎</strong>
+              </td>
+            </tr>
+            <tr>
+              <td>Easy to read</td>
+              <td>
+                <strong style='font-size: 30; color: green'>✔︎</strong>
+              </td>
+              <td>
+                <strong style='font-size: 30; color: green'>✔︎</strong>
+              </td>
+            </tr>
+            <tr>
+              <td>Substitutions</td>
+              <td>
+                <strong style='font-size: 30; color: green'>✔︎</strong>
+              </td>
+              <td>
+                <strong style='font-size: 30; color: red'>✘︎</strong>
+              </td>
+            </tr>
+            <tr>
+              <td>closure body only</td>
+              <td>
+                <strong style='font-size: 30; color: green'>✔︎</strong>
+              </td>
+              <td>
+                <strong style='font-size: 30; color: red'>✘︎</strong>
+              </td>
+            </tr>
+            <tr>
+              <td>short syntax</td>
+              <td>
+                <strong style='font-size: 30; color: green'>✔︎</strong>
+              </td>
+              <td>
+                <strong style='font-size: 30; color: red'>✘︎</strong>
+              </td>
+            </tr>
+            <tr>
+              <td>already in groovy-core</td>
+              <td>
+                <strong style='font-size: 30; color: red'>✘︎</strong>
+              </td>
+              <td>
+                <strong style='font-size: 30; color: green'>✔︎</strong>
+              </td>
+            </tr>
+          </table>
+        </section>
+        <section>
+          <h2>Current status of macro methods</h2>
+          <ul>
+            <li class='fragment'>Not yet in groovy-core</li>
+            <li class='fragment'>...but available as 3rd party library</li>
+            <li class='fragment'>Here: <a href="http://github.com/bsideup/groovy-macro-methods">http://github.com/bsideup/groovy-macro-methods</a></li>
+            <li class='fragment'>Userland syntax to be discussed</li>
+            <li class='fragment'>Too cool to be accepted fast</li>
+          </ul>
+        </section>
+        <section>
+          <h1>Questions?</h1>
+        </section>
+      </div>
+      <a class='footer' href='https://twitter.com/bsideup'>@bsideup</a>
+    </div>
+    <script src='webjars/reveal.js/3.0.0/lib/js/head.min.js'></script>
+    <script src='webjars/reveal.js/3.0.0/js/reveal.js'></script>
+    <script>
+			Reveal.initialize({
+				controls: false,
+				progress: false,
+				history: true,
+				center: true,
+
+				transition: 'none', // none/fade/slide/convex/concave/zoom
+				
+				// transitionSpeed: 'fast',
+				
+				viewDistance: 2,
+				
+				backgroundTransition: 'none',
+
+				// Optional reveal.js plugins
+				dependencies: [
+					{ src: 'webjars/reveal.js/3.0.0/lib/js/classList.js', condition: function() { return !document.body.classList; } },
+					{ src: 'webjars/reveal.js/3.0.0/plugin/markdown/marked.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'webjars/reveal.js/3.0.0/plugin/markdown/markdown.js', condition: function() { return !!document.querySelector( '[data-markdown]' ); } },
+					{ src: 'webjars/reveal.js/3.0.0/plugin/highlight/highlight.js', async: true, condition: function() { return !!document.querySelector( 'pre code' ); }, callback: function() { hljs.initHighlightingOnLoad(); } },
+					{ src: 'webjars/reveal.js/3.0.0/plugin/zoom-js/zoom.js', async: true },
+					{ src: 'webjars/reveal.js/3.0.0/plugin/notes/notes.js', async: true },
+					{ src: 'plugins/reveal-code-focus/reveal-code-focus.js', async: true }
+				]
+			});
+</script>
+  </body>
+</html>
