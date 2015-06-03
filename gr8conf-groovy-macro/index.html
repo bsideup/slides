@@ -266,6 +266,36 @@ def makeNullSafe(Expression exp) {
 println hello</code></pre>
         </section>
         <section>
+          <h3>Pattern matching with macros</h3>
+          <pre><code class="groovy" data-trim>def fact(num) {
+    return match(num) {
+        when String then fact(num.toInteger())
+        when(0 | 1) then 1
+        when 2 then 2
+        orElse it * fact(it - 1)
+    }
+}
+
+assert fact("5") == 120</code></pre>
+          <pre><code class="groovy" data-trim>{ java.lang.Object it -&gt;
+    if(it instanceof String) {
+        return fact(num.toInteger())
+    }
+    
+    if ( it == 0 || it == 1) {
+        return 1
+    }
+    
+    if(it == 2) {
+        return 2
+    }
+    
+    return it * fact(it - 1)
+}.call( num )</code></pre>
+          <span class='fragment' data-code-focus='2-2'></span>
+          <span class='fragment' data-code-focus=''></span>
+        </section>
+        <section>
           <h3>Classic AST nodes creation</h3>
           <pre><code class="groovy" data-trim>def returnStatement = new ReturnStatement(
         new ConstructorCallExpression(
